@@ -5,6 +5,7 @@
   "main": "main.js",
   "dependencies": {
     "chalk": "^2.4.1",
+    "nodemailer": "^4.6.5",
     "prompt": "^1.0.0",
     "puppeteer": "^1.4.0"
   },

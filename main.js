@@ -4,10 +4,13 @@
 var puppeteer = require('puppeteer');
 const prompt = require('prompt');
 const chalk = require('chalk');
+const emailer = require('nodemailer');
+
+const waitTime = 10000;
 
 
-function email() {
-
+function sendEmail(msg) {
+    console.log('Send Email called');
 }
 
 /*******************************
@@ -46,13 +49,69 @@ async function search(input, page) {
 
 
 async function checkSeats(input, page) {
-
     return await page.evaluate((input) => {
         /* It's hard to grab how many seats are open. So I grabbed the add checkbox, went up 2 parents, and back down to the td */
-        var openSeats = document.querySelector('input[title="Add ESS  127-01"]').parentElement.parentElement.children[5].innerHTML.trim().split('/')[0];
+
+        var inputButton = document.querySelector('input[title="Add ESS  127-01"]');
+
+        if (inputButton) {
+            var openSeats = inputButton.parentElement.parentElement.children[5].innerHTML.trim().split('/')[0];
+        } else {
+            return Promise.resolve(false);
+        }
 
         return Promise.resolve(openSeats > 0);
     }, input);
+}
+
+/*************************************
+ * Recursivly calls itself. 
+ * Checks for open seats & adds if found
+ * if not waits, refreshes, & tries again
+ *************************************/
+async function doHardWork(input, page) {
+
+    // function wait() {
+    //     return new Promise((res) => {
+    //         setTimeout(() => {
+    //             res();
+    //         }, waitTime);
+    //     });
+    // }
+
+
+
+    console.log(chalk.magenta('Looking'));
+    var openSeats = await checkSeats(input, page);
+
+    if (openSeats === true) {
+        console.log(chalk.green('An open spot was found!'));
+
+        /* select Course */
+        await page.click(`input[title='Add ${input.subject}  ${input.courseCode}-${input.section}']`);
+        /* Click Add */
+        await Promise.all([
+            page.waitForNavigation(),
+            page.click('input[value="Add Courses"]')
+        ]);
+
+        // TODO verify result
+        console.log(chalk.green('Attempted to add course'));
+        sendEmail('Attempted to add course');
+
+    } else {
+        console.log('Nothing Found');
+
+        /* Wait, refresh page, search again */
+        setTimeout(async() => {
+            await Promise.all([
+                page.waitForNavigation(),
+                page.click('#pg0_V_btnSearch')
+            ]);
+            doHardWork(input, page);
+        }, waitTime);
+
+    }
 }
 
 /*************************************
@@ -64,21 +123,16 @@ async function main(input) {
     });
 
     try {
-
         var page = await browser.newPage();
         page = await login(input, page);
         page = await search(input, page);
 
+        doHardWork(input, page);
 
-        var openSeats = await checkSeats(input, page);
-
-        if (openSeats === true) {
-            await page.click(`input[title='Add ${input.subject}  ${input.courseCode}-${input.section}']`);
-
-        } else {}
     } catch (err) {
-        // TODO email me
-        console.log(chalk.red(err));
+        browser.close();
+        sendEmail(err);
+        console.error(chalk.red(err));
     }
 }
 
