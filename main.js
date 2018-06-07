@@ -6,7 +6,7 @@ const prompt = require('prompt');
 const chalk = require('chalk');
 const emailer = require('nodemailer');
 
-const waitTime = 10000;
+const waitTime = 180000;
 
 
 function sendEmail(msg) {
@@ -84,6 +84,8 @@ async function doHardWork(input, page) {
     console.log(chalk.magenta('Looking'));
     var openSeats = await checkSeats(input, page);
 
+    // ERROR THIS IS NEVER TRUE
+
     if (openSeats === true) {
         console.log(chalk.green('An open spot was found!'));
 
@@ -157,6 +159,12 @@ function getInput(cb) {
             console.error(chalk.red(err.stack));
             return;
         }
+
+        if (!process.env.USER || !process.env.PASS) {
+            console.error(chalk.red('Auth values missing'));
+            return;
+        }
+        
         input.username = process.env.USER;
         input.password = process.env.PASS;
 
