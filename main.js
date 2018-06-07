@@ -98,6 +98,10 @@ async function doHardWork(input, page) {
         ]);
 
         // TODO verify result
+
+        
+
+
         console.log(chalk.green('Attempted to add course'));
         sendEmail('Attempted to add course');
 
