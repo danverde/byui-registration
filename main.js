@@ -1,4 +1,3 @@
-/* eslint env node, es6 */
 /* eslint no-console: 0 */
 
 var puppeteer = require('puppeteer');
@@ -11,6 +10,7 @@ const waitTime = 180000;
 
 function sendEmail(msg) {
     console.log('Send Email called');
+    console.log(msg);
 }
 
 /*******************************
@@ -51,12 +51,14 @@ async function search(input, page) {
 async function checkSeats(input, page) {
     return await page.evaluate((input) => {
         /* It's hard to grab how many seats are open. So I grabbed the add checkbox, went up 2 parents, and back down to the td */
-
-        var inputButton = document.querySelector('input[title="Add ESS  127-01"]');
-
+        
+        var inputButton = document.querySelector(`input[title="Add ${input.subject}  ${input.courseCode}-${input.section}"]`);
+        
         if (inputButton) {
+            console.log('input button found');
             var openSeats = inputButton.parentElement.parentElement.children[5].innerHTML.trim().split('/')[0];
         } else {
+            console.log('input button missing');
             return Promise.resolve(false);
         }
 
@@ -70,21 +72,8 @@ async function checkSeats(input, page) {
  * if not waits, refreshes, & tries again
  *************************************/
 async function doHardWork(input, page) {
-
-    // function wait() {
-    //     return new Promise((res) => {
-    //         setTimeout(() => {
-    //             res();
-    //         }, waitTime);
-    //     });
-    // }
-
-
-
     console.log(chalk.magenta('Looking'));
     var openSeats = await checkSeats(input, page);
-
-    // ERROR THIS IS NEVER TRUE
 
     if (openSeats === true) {
         console.log(chalk.green('An open spot was found!'));
@@ -98,8 +87,6 @@ async function doHardWork(input, page) {
         ]);
 
         // TODO verify result
-
-        
 
 
         console.log(chalk.green('Attempted to add course'));
@@ -172,10 +159,8 @@ function getInput(cb) {
         input.username = process.env.USER;
         input.password = process.env.PASS;
 
-        input.subject = /^\w{2,3}/.exec(input.courseCode)[0]
-        input.courseCode = /\d{3}\w?$/.exec(input.courseCode)[0]
-
-
+        input.subject = /^\w{2,3}/.exec(input.courseCode)[0];
+        input.courseCode = /\d{3}\w?$/.exec(input.courseCode)[0];
 
         cb(input);
     });
