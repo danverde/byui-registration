@@ -1,0 +1,17 @@
+{
+  "name": "byuiregister",
+  "version": "1.0.0",
+  "description": "a tool to get you into waitlisted courses at BYU-I",
+  "main": "main.js",
+  "dependencies": {
+    "chalk": "^2.4.1",
+    "prompt": "^1.0.0",
+    "puppeteer": "^1.4.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daniel Green",
+  "license": "ISC"
+}
