@@ -53,16 +53,22 @@ async function checkSeats(input, page) {
         /* It's hard to grab how many seats are open. So I grabbed the add checkbox, went up 2 parents, and back down to the td */
         
         var inputButton = document.querySelector(`input[title="Add ${input.subject}  ${input.courseCode}-${input.section}"]`);
-        
+        var registerable = false;
+
         if (inputButton) {
             console.log('input button found');
-            var openSeats = inputButton.parentElement.parentElement.children[5].innerHTML.trim().split('/')[0];
+
+            var readyConditions = ['open', 'reopened'];
+            var status = inputButton.parentElement.parentElement.children[6].innerHTML.trim().toLowerCase();
+            registerable = readyConditions.includes(status);
+            
+            // console.log(status);
         } else {
-            console.log('input button missing');
+            console.log('input button missing. Unable to add');
             return Promise.resolve(false);
         }
 
-        return Promise.resolve(openSeats > 0);
+        return Promise.resolve(registerable);
     }, input);
 }
 
@@ -87,10 +93,23 @@ async function doHardWork(input, page) {
         ]);
 
         // TODO verify result
+        var validated = await page.evaluate(() => {
+            var successMsg = document.querySelectorAll('div.regsuccess');
 
+            if (successMsg === undefined) successMsg = 0;
+            else successMsg = successMsg.length; 
+            
+            console.log(successMsg);
+            return  successMsg > 0;
+        });
 
-        console.log(chalk.green('Attempted to add course'));
-        sendEmail('Attempted to add course');
+        if (validated) {
+            console.log(chalk.green(`Added ${input.subject} ${input.courseCode}-${input.section}`));
+            sendEmail(`Added ${input.subject} ${input.courseCode}-${input.section}`);
+        } else {
+            console.log(chalk.yellow('Unable to verify course addition'));
+            sendEmail(`Attempted to add ${input.subjet} ${input.courseCode}-${input.section}. Unable to verify - Please ensure you have actually been added to the class.`);
+        }
 
     } else {
         console.log('Nothing Found');
